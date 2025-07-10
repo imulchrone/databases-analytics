@@ -315,7 +315,7 @@ print()
 conn.commit()
 conn.close()
 
-'''
+
 #1-d
 #----------------------------------------------------------------------------------------------------
 conn = sqlite3.connect('dsc450.db')
@@ -442,5 +442,4 @@ print()
 tweets250.close()
 tweets1500.close()
 conn.commit()
-conn.close()'
-'''
+conn.close()
