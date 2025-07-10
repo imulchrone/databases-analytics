@@ -1,0 +1,107 @@
+--DSC 450
+--Homework 2
+
+CREATE TABLE Author
+(
+    LastName VARCHAR2(25),
+    FirstName VARCHAR2(25),
+    ID NUMBER(10) PRIMARY KEY,
+    Birthdate DATE
+);
+
+CREATE TABLE Publisher
+(
+    Name VARCHAR2(45),
+    PubNumber NUMBER(10) PRIMARY KEY,
+    Address VARCHAR2(30)
+);
+
+CREATE TABLE Books
+(
+    ISBN VARCHAR2(8) PRIMARY KEY,
+    Title VARCHAR2(50),
+    Publisher NUMBER(10),
+    
+    CONSTRAINT BooksFK
+        FOREIGN KEY (Publisher)
+        REFERENCES Publisher(PubNumber)
+);
+
+CREATE TABLE Write
+(
+    Author NUMBER(10),
+    Book VARCHAR2(8),
+    Contribution NUMBER(1),
+    
+    CONSTRAINT Write_PK
+        PRIMARY KEY (Author, Book),
+    
+    CONSTRAINT Write_FK
+        FOREIGN KEY (Author)
+        REFERENCES Author(ID),
+    
+    CONSTRAINT Write_FK2
+        FOREIGN KEY (Book)
+        REFERENCES Books(ISBN)
+);
+
+INSERT INTO Author VALUES ('King', 'Stephen', 2, to_date('September 9 1947', 'Month dd YYYY'));
+INSERT INTO Author VALUES ('Asimov', 'Isaac', 4, to_date('January 2 1921', 'Month dd YYYY'));
+INSERT INTO Author VALUES ('Verne', 'Jules', 7, to_date('February 8 1828', 'Month dd YYYY'));
+INSERT INTO Author VALUES ('Shelley', 'Mary', 37, to_date('August 30 1797', 'Month dd YYYY'));
+
+INSERT INTO Publisher VALUES ('Bloomsbury Publishing', 17, 'London Borough of Camden');
+INSERT INTO Publisher VALUES ('Arthur A Levine Books', 18, 'New York City');
+
+INSERT INTO Books VALUES ('1111-111', 'Databases from Outer Space', 17);
+INSERT INTO Books VALUES ('2223-233', 'Revenge of the SQL', 17);
+INSERT INTO Books VALUES ('3333-323', 'The Night of the Living Databases', 18);
+
+INSERT INTO Write VALUES (2, '1111-111', 1);
+INSERT INTO Write VALUES (4, '1111-111', 2);
+INSERT INTO Write VALUES (4, '2223-233', 1);
+INSERT INTO Write VALUES (7, '2223-233', 2);
+INSERT INTO Write VALUES (37, '3333-323', 1);
+INSERT INTO Write VALUES (2, '3333-323', 2);
+
+SELECT * FROM Author
+SELECT * FROM Publisher
+SELECT * FROM Books
+SELECT * FROM Write
+
+-------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE Departments
+(
+    Name VARCHAR2(20) PRIMARY KEY,
+    Chair VARCHAR2(20),
+    College VARCHAR2(20)
+);
+
+CREATE TABLE Advisors
+(
+    ID NUMBER(10) PRIMARY KEY,
+    Name VARCHAR2(50),
+    Address VARCHAR2(25),
+    ResearchArea VARCHAR2(25),
+    DepartmentID VARCHAR2(20),
+    
+    CONSTRAINT Advisors_FK
+        FOREIGN KEY (DepartmentID)
+        REFERENCES Departments(Name)
+);
+
+CREATE TABLE Students
+(
+    StudentID NUMBER(10) PRIMARY KEY,
+    FirstName VARCHAR2(25),
+    LastName VARCHAR2(25),
+    DOB DATE,
+    Phone NUMBER(10),
+    AdvisorID NUMBER(10),
+    
+    CONSTRAINT Students_FK
+        FOREIGN KEY (AdvisorID)
+        REFERENCES Advisors(ID)
+);
