@@ -1,0 +1,147 @@
+DROP TABLE STUDENT CASCADE CONSTRAINTS;
+CREATE TABLE STUDENT(
+	ID		CHAR(3),
+	Name		VARCHAR2(20),
+	Midterm	NUMBER(3,0) 	CHECK (Midterm>=0 AND Midterm<=100),
+	Final		NUMBER(3,0)	CHECK (Final>=0 AND Final<=100),
+	Homework	NUMBER(3,0)	CHECK (Homework>=0 AND Homework<=100),
+	PRIMARY KEY (ID)
+);
+INSERT INTO STUDENT VALUES ( '445', 'Seinfeld', 86, 90, 99 );
+INSERT INTO STUDENT VALUES ( '909', 'Costanza', 74, 72, 86 );
+INSERT INTO STUDENT VALUES ( '123', 'Benes', 93, 89, 91 );
+INSERT INTO STUDENT VALUES ( '111', 'Kramer', 99, 91, 93 );
+INSERT INTO STUDENT VALUES ( '667', 'Newman', 78, 82, 84 );
+INSERT INTO STUDENT VALUES ( '889', 'Banya', 51, 66, 50 );
+SELECT * FROM STUDENT;
+
+DROP TABLE WEIGHTS CASCADE CONSTRAINTS;
+CREATE TABLE WEIGHTS(
+	MidPct	NUMBER(2,0) CHECK (MidPct>=0 AND MidPct<=100),
+	FinPct	NUMBER(2,0) CHECK (FinPct>=0 AND FinPct<=100),
+	HWPct	NUMBER(2,0) CHECK (HWPct>=0 AND HWPct<=100)
+);
+INSERT INTO WEIGHTS VALUES ( 30, 30, 40 );
+SELECT * FROM WEIGHTS;
+
+
+CREATE TABLE SECTION(
+ SectionID 	CHAR(5),
+ Course	VARCHAR2(8),
+ Students	NUMBER DEFAULT 0,
+ CONSTRAINT PK_SECTION 
+		PRIMARY KEY (SectionID)
+);
+
+CREATE TABLE ENROLLMENT(
+ SectionID	CHAR(5),
+ StudentID	CHAR(7),
+ CONSTRAINT PK_ENROLLMENT 
+		PRIMARY KEY (SectionID, StudentID),
+ CONSTRAINT FK_ENROLLMENT_SECTION 
+		FOREIGN KEY (SectionID)
+		REFERENCES SECTION (SectionID)
+);
+
+ 
+INSERT INTO SECTION (SectionID, Course) VALUES ( '12345', 'CSC 355' );
+INSERT INTO SECTION (SectionID, Course) VALUES ( '22109', 'CSC 309' );
+INSERT INTO SECTION (SectionID, Course) VALUES ( '99113', 'CSC 300' );
+INSERT INTO SECTION (SectionID, Course) VALUES ( '99114', 'CSC 300' );
+COMMIT;
+
+CREATE OR REPLACE TRIGGER check_enrolled
+BEFORE INSERT ON ENROLLMENT
+FOR EACH ROW
+DECLARE
+    enrolled NUMBER;
+BEGIN
+    SELECT Students INTO enrolled FROM Section
+                WHERE :new.SectionID = Section.SectionID;
+    IF enrolled >= 5
+        THEN
+        raise_application_error(-20102, 'Section is full');
+    ELSE
+        UPDATE Section
+        SET Students = Students + 1
+        WHERE :new.SectionID = Section.SectionID;
+    END IF;
+END;
+/
+
+INSERT INTO ENROLLMENT VALUES ('12345', '1234567');
+INSERT INTO ENROLLMENT VALUES ('12345', '2234567');
+INSERT INTO ENROLLMENT VALUES ('12345', '3234567');
+INSERT INTO ENROLLMENT VALUES ('12345', '4234567');
+INSERT INTO ENROLLMENT VALUES ('12345', '5234567');
+INSERT INTO ENROLLMENT VALUES ('12345', '6234567');
+
+SELECT * FROM SECTION;
+SELECT * FROM ENROLLMENT;
+
+DROP TABLE ENROLLMENT;
+DROP TABLE SECTION;
+
+CREATE OR REPLACE TRIGGER update_students
+AFTER DELETE ON ENROLLMENT
+FOR EACH ROW
+BEGIN
+    UPDATE Section
+    SET Students = Students - 1
+    WHERE :old.SectionID = Section.SectionID;
+END;
+/
+
+DELETE FROM ENROLLMENT WHERE StudentID = '1234567';
+SELECT * FROM SECTION;
+SELECT * FROM ENROLLMENT;
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    A WEIGHTS.MidPct%TYPE;
+    B WEIGHTS.FinPct%TYPE;
+    C WEIGHTS.HWPct%TYPE;
+    
+    SID STUDENT.ID%TYPE;
+    SName STUDENT.Name%TYPE;
+    SMidterm STUDENT.Midterm%TYPE;
+    SFinal STUDENT.Final%TYPE;
+    SHomework STUDENT.Homework%TYPE;
+    Grade NUMBER (3,1);
+    Letter VARCHAR (2);
+    
+CURSOR WeightsCursor IS
+    SELECT MidPct, FinPct, HWPct
+    FROM WEIGHTS;
+    
+CURSOR StudentCursor IS
+    SELECT ID, Name, Midterm, Final, Homework
+    FROM Student;
+    
+BEGIN
+
+OPEN WeightsCursor;
+
+LOOP
+FETCH WeightsCursor INTO A,B,C;
+EXIT WHEN WeightsCursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('Weights are '|| A ||', '|| B ||', '|| C);
+END LOOP;
+CLOSE WeightsCursor;
+
+OPEN StudentCursor;
+
+LOOP
+FETCH StudentCursor INTO SID,SName,SMidterm,SFinal,SHomework;
+EXIT WHEN StudentCursor%NOTFOUND;
+    Grade := (SMidterm*0.3)+(SFinal*0.3)+(SHomework*0.4);
+    IF Grade >= 90 THEN DBMS_OUTPUT.PUT_LINE(SID||' '||Sname||' '||Grade||' A');
+    ELSIF Grade >= 80 AND Grade < 90 THEN DBMS_OUTPUT.PUT_LINE(SID||' '||Sname||' '||Grade||' B');
+    ELSIF Grade >= 65 AND Grade < 80 THEN DBMS_OUTPUT.PUT_LINE(SID||' '||Sname||' '||Grade||' C');
+    ELSE DBMS_OUTPUT.PUT_LINE(SID||' '||Sname||' '||Grade||' F');
+    END IF;
+END LOOP;
+CLOSE StudentCursor;
+END;
+/
